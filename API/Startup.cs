@@ -1,4 +1,6 @@
+using API.Middelware;
 using Application.Activities;
+using FluentValidation.AspNetCore;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -21,6 +23,7 @@ namespace API
 
         // This method gets called by the runtime. Use this method to add services to the container.
         // Dependency injector container.
+        // Order is important
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
@@ -36,14 +39,20 @@ namespace API
                 });
             });
             services.AddMediatR(typeof(List.Handler).Assembly); // Tell mediator where our handlers are. 
+            // Register validators. Needs only one to tell where to look for them.
+            services.AddControllers().AddFluentValidation(cfg => 
+            {
+                cfg.RegisterValidatorsFromAssemblyContaining<Create>();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseMiddleware<ErrorHandlingMiddleware>();
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
+                //app.UseDeveloperExceptionPage();
             }
 
             // app.UseHttpsRedirection();
